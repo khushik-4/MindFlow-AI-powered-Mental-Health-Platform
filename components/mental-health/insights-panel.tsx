@@ -232,7 +232,7 @@ export function InsightsPanel({
                   <InsightCard key={index} insight={insight} />
                 ))
               ) : (
-                <p className="text-muted-foreground text-sm">Generate insights to see analysis</p>
+                <p className="text-muted-foreground text-sm">Add at least one mood entry in the Journal tab, then click Generate Insights to see your analysis</p>
               )}
             </CardContent>
           </Card>
@@ -261,7 +261,7 @@ export function InsightsPanel({
                   <RecommendationCard key={index} rec={rec} />
                 ))
               ) : (
-                <p className="text-muted-foreground text-sm">Generate insights to see analysis</p>
+                <p className="text-muted-foreground text-sm">Add at least one mood entry in the Journal tab, then click Generate Insights to see your analysis</p>
               )}
             </CardContent>
           </Card>
@@ -293,7 +293,7 @@ export function InsightsPanel({
                   ))}
                 </>
               ) : (
-                <p className="text-muted-foreground text-sm">Generate insights to see analysis</p>
+                <p className="text-muted-foreground text-sm">Add at least one mood entry in the Journal tab, then click Generate Insights to see your analysis</p>
               )}
             </CardContent>
           </Card>
