@@ -27,12 +27,16 @@ MindFlow is a private, AI-assisted space designed for mental wellness check-ins,
 
 ## Tech Stack
 
-- Frontend: Next.js 14, React 18, Tailwind CSS, Framer Motion, Radix UI (Shadcn)
-- Backend: Next.js 14 Route Handlers
-- Database: PostgreSQL, Prisma ORM
-- AI: Groq SDK (Llama 3.1 8B Instant)
-- Authentication: JWT, bcryptjs, cookie-based sessions
-- Deployment: Vercel / Custom Node hosting
+-> Language: TypeScript
+-> Frontend: Next.js 14, React 18, Tailwind CSS, Framer Motion, Radix UI (Shadcn), Lucide React (icons), Chart.js / React Chartjs 2 (graphs)
+-> Backend: Next.js 14 Route Handlers
+-> Database and ORM: PostgreSQL, Prisma ORM
+-> AI / LLM: Groq SDK (Llama 3.1 8B Instant)
+-> Authentication: JSON Web Tokens (JWT) via jsonwebtoken, bcryptjs for password hashing, and cookie-based session headers
+-> State Management: React Context API (AuthContext)
+-> Deployment Target: Vercel / Custom Node hosting
+
+Note: unused dependencies present in package.json: @auth/core, @aws-sdk/*, @excalidraw/excalidraw, @google/generative-ai, @langchain/*, firebase, firebase-admin, next-auth, next-ws, react-hook-form, zod
 
 ## How To Use It
 
@@ -44,17 +48,26 @@ MindFlow is a private, AI-assisted space designed for mental wellness check-ins,
 
 ## Getting Started (Local Setup)
 
--> Step 1: Clone the repository and navigate into the root directory.
+-> Step 1: Clone the repository and navigate into the root directory:
+   git clone https://github.com/your-username/MindFlow.git
+   cd MindFlow
+
 -> Step 2: Install dependencies by running:
    npm install
+
 -> Step 3: Create a .env file in the root directory and define the following variables:
-   DATABASE_URL="your-postgresql-url"
-   JWT_SECRET="your-jwt-secret-key"
-   GROQ_API_KEY="your-groq-api-key"
--> Step 4: Sync the database schema and generate the Prisma Client:
-   npx prisma db push
+   - DATABASE_URL: PostgreSQL database connection string (obtain from https://neon.tech)
+   - GROQ_API_KEY: API credential for LLM access (obtain from https://console.groq.com/keys)
+   - JWT_SECRET: A random secure string used locally to sign authentication tokens (no external link needed)
+   - NEXT_PUBLIC_MAPBOX_API_KEY: API credential for geocoding services (obtain from https://docs.mapbox.com/help/getting-started/access-tokens/)
+
+-> Step 4: Generate the Prisma client:
    npx prisma generate
--> Step 5: Run the development server:
+
+-> Step 5: Sync the database schema to your PostgreSQL instance:
+   npx prisma db push
+
+-> Step 6: Start the local development server:
    npm run dev
 
 ## Benefits / Who This Is For
