@@ -1,0 +1,301 @@
+// This is the unified Prisma schema for MindFlow, targeting PostgreSQL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Stores user account credentials, registration data, and authentication details
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  // Relations
+  profile         UserProfile?
+  preferences     UserPreference?
+  sessions        Session[]
+  chatMessages    ChatMessage[]
+  posts           ForumPost[]
+  forumPosts      ForumPost[]   @relation("UserForumPosts")
+  replies         ForumReply[]
+  forumMembers    ForumMember[]
+  postLikes       PostLike[]
+  commentLikes    CommentLike[]
+  roomMessages    ChatRoomMessage[]
+  roomMembers     ChatRoomMember[]
+  deviceSettings  DeviceSettings[]
+  activities      Activity[]
+  healthData      HealthData[]
+  moodEntries     MoodEntry[]
+}
+
+// Stores detailed wellness preferences, bios, avatar images, and targets for user profiles
+model UserProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  bio         String?
+  avatarUrl   String?
+  fitnessGoal String?
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores user configuration settings and application notification toggles
+model UserPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  notifications   Boolean  @default(true)
+  aiInterventions Boolean  @default(true)
+  preferences     Json     @default("{}")
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores settings for connected home automation and smart devices
+model DeviceSettings {
+  id         String   @id @default(cuid())
+  userId     String
+  deviceType String
+  settings   Json
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores logs of completed therapy session summaries, durations, and session mood scores
+model Session {
+  id        String        @id @default(cuid())
+  userId    String
+  startedAt DateTime      @default(now())
+  endedAt   DateTime?
+  summary   String?
+  moodScore Int?
+  
+  // Relations
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+}
+
+// Stores individual conversational messages (user and assistant) within a therapy session
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  role      String   // "user" or "assistant"
+  content   String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores topic discussion categories/channels in the community forum
+model Forum {
+  id          String        @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  memberCount Int           @default(0)
+  postCount   Int           @default(0)
+  isPrivate   Boolean       @default(false)
+  topics      String[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  posts       ForumPost[]
+  members     ForumMember[]
+}
+
+// Stores community discussion forum topics and posts authored by users
+model ForumPost {
+  id            String       @id @default(cuid())
+  forumId       String?
+  userId        String
+  title         String
+  content       String
+  topic         String?
+  category      String?
+  likes         Int          @default(0)
+  commentsCount Int          @default(0)
+  tags          String[]
+  isPrivate     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  // Relations
+  forum         Forum?       @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies       ForumReply[]
+  postLikes     PostLike[]
+
+  userForumPost   User?      @relation("UserForumPosts", fields: [userForumPostId], references: [id])
+  userForumPostId String?
+}
+
+// Stores users' comments and replies attached to specific community forum posts
+model ForumReply {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  post         ForumPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commentLikes CommentLike[]
+}
+
+// Stores community forum group members and roles
+model ForumMember {
+  id       String   @id @default(cuid())
+  forumId  String
+  userId   String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+
+  // Relations
+  forum    Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores user likes/reactions on discussion forum posts
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores user likes/reactions on forum comments
+model CommentLike {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  reply     ForumReply @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores public and private group chat rooms
+model ChatRoom {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  memberCount Int      @default(0)
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  messages    ChatRoomMessage[]
+  members     ChatRoomMember[]
+}
+
+// Stores group chat room messages authored by users
+model ChatRoomMessage {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  room      ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores group chat room member roles and join dates
+model ChatRoomMember {
+  id       String   @id @default(cuid())
+  roomId   String
+  userId   String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+  lastSeen DateTime @default(now())
+
+  // Relations
+  room     ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+
+// Stores user activities, including mood check-ins, meditation sessions, and exercises
+model Activity {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // 'mood', 'meditation', 'exercise', 'therapy', etc.
+  name        String
+  description String?
+  timestamp   DateTime @default(now())
+  duration    Int?     // in minutes
+  completed   Boolean  @default(false)
+  moodScore   Int?     // 1-100
+  moodNote    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores daily wearable tracking metrics including steps, heart rates, and sleep lengths
+model HealthData {
+  id           String   @id @default(cuid())
+  userId       String
+  date         DateTime @default(now())
+  steps        Int      @default(0)
+  heartRateAvg Int      @default(0)
+  sleepHours   Float    @default(0.0)
+  sleepQuality String?  // "good", "fair", "poor"
+  
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores daily self-reported emotional status logs and user journal entries
+model MoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  score     Int      // Score from 1 to 10
+  note      String?
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Stores catalog of active support groups
+model SupportGroup {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
