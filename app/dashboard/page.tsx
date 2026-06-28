@@ -59,7 +59,6 @@ import { ChatHistory } from "@/components/chat/chat-history";
 import {
   getTodaysActivities,
   updateActivityStatus,
-  getLatestHealthMetrics,
   getUserActivities,
   saveMoodData,
   logActivity,
@@ -87,7 +86,6 @@ import Modal from "@/components/Modal";
 import { ActivityLogger } from "@/components/activities/activity-logger";
 
 import { HealthMetrics } from "@/components/dashboard/health-metrics";
-import { FitbitConnect } from "@/components/wearables/fitbit-connect";
 
 import {
   ActivityLevel,
@@ -227,7 +225,7 @@ export default function Dashboard() {
     totalActivities: 0,
   });
 
-// transformActivitiesToDayActivity is imported from dashboard-utils
+  // transformActivitiesToDayActivity is imported from dashboard-utils
 
   // Modify the loadActivities function to update activityHistory
   const loadActivities = useCallback(async () => {
@@ -667,8 +665,8 @@ export default function Dashboard() {
                           insight.priority === "high"
                             ? "bg-primary/10"
                             : insight.priority === "medium"
-                            ? "bg-primary/5"
-                            : "bg-muted"
+                              ? "bg-primary/5"
+                              : "bg-muted"
                         )}
                       >
                         <div className="flex items-center gap-2">

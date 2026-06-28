@@ -6,7 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function resolveApiUrl(path: string): string {
-  const basePath = process.env.NODE_ENV === "production" ? "/mindflow" : "";
-  return `${basePath}${path}`;
+  return path;
 }
-
