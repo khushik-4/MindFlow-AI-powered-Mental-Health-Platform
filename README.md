@@ -58,7 +58,6 @@ MindFlow is a private, AI-assisted space designed for mental wellness check-ins,
    - DATABASE_URL: PostgreSQL database connection string (obtain from https://neon.tech)
    - GROQ_API_KEY: API credential for LLM access (obtain from https://console.groq.com/keys)
    - JWT_SECRET: A random secure string used locally to sign authentication tokens (no external link needed)
-   - NEXT_PUBLIC_MAPBOX_API_KEY: API credential for geocoding services (obtain from https://docs.mapbox.com/help/getting-started/access-tokens/)
 
 -> Step 4: Generate the Prisma client:
    npx prisma generate
