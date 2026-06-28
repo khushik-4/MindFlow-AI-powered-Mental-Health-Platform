@@ -1,24 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoodJournal } from "@/components/mental-health/mood-journal";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calendar, LineChart as ChartIcon, Heart } from "lucide-react";
-import {
-  generateHealthInsights,
-  generateMoodRecommendations,
-  analyzeSleepPattern,
-} from "@/lib/services/ai-insights";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { MoodHistory } from "@/components/mental-health/mood-history";
 import { InsightsPanel } from "@/components/mental-health/insights-panel";
 import { SupportPanel } from "@/components/mental-health/support-panel";
 import { resolveApiUrl } from "@/lib/utils";
-
-const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_API_KEY;
 
 interface MoodEntry {
   id: string;
@@ -26,12 +19,6 @@ interface MoodEntry {
   description: string;
   moodNote: string;
   createdAt: string;
-}
-
-interface Location {
-  country: string;
-  city: string;
-  state?: string;
 }
 
 interface Insight {
@@ -91,56 +78,8 @@ function constructHealthData(entries: MoodEntry[]): HealthData {
   };
 }
 
-async function runHealthInsights(healthData: HealthData) {
-  try {
-    const res = await generateHealthInsights(healthData);
-    return {
-      success: res.length > 0,
-      data: res,
-      error: res.length === 0 ? "No health insights generated" : null,
-    };
-  } catch (err: any) {
-    return { success: false, data: [], error: err.message };
-  }
-}
-
-async function runMoodRecommendations(healthData: HealthData) {
-  try {
-    const res = await generateMoodRecommendations(healthData.mood, healthData.activities);
-    return {
-      success: res.length > 0,
-      data: res,
-      error: res.length === 0 ? "No mood recommendations generated" : null,
-    };
-  } catch (err: any) {
-    return { success: false, data: [], error: err.message };
-  }
-}
-
-async function runSleepAnalysis(healthData: HealthData) {
-  try {
-    const res = await analyzeSleepPattern([
-      {
-        date: new Date().toISOString(),
-        duration: healthData.sleep.duration,
-        efficiency: healthData.sleep.efficiency,
-        stages: healthData.sleep.stages,
-      },
-    ]);
-    return {
-      success: !!res,
-      data: res,
-      error: !res ? "No sleep analysis generated" : null,
-    };
-  } catch (err: any) {
-    return { success: false, data: null, error: err.message };
-  }
-}
-
 export default function MentalHealthPage() {
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
-  const [location, setLocation] = useState<Location | null>(null);
-  const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [sleepInsights, setSleepInsights] = useState<SleepInsight | null>(null);
@@ -149,49 +88,7 @@ export default function MentalHealthPage() {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("journal");
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchMoodEntries();
-      getUserLocation();
-    }
-  }, [isAuthenticated]);
-
-  const getUserLocation = async () => {
-    setLoading(true);
-    try {
-      if (!MAPBOX_API_KEY) {
-        throw new Error("Mapbox API key not configured");
-      }
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      });
-      const { latitude, longitude } = position.coords;
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_API_KEY}`
-      );
-      const data = await res.json();
-      const features = data.features[0];
-      const findContext = (pfx: string) =>
-        features.context.find((c: any) => c.id.startsWith(pfx))?.text;
-
-      setLocation({
-        country: findContext("country"),
-        city: findContext("place"),
-        state: findContext("region"),
-      });
-    } catch (error) {
-      console.error("Error getting location:", error);
-      toast({
-        title: "Location Error",
-        description: "Could not determine your location. Showing general resources.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMoodEntries = async () => {
+  const fetchMoodEntries = useCallback(async () => {
     try {
       const response = await fetch(resolveApiUrl("/api/mental-health/mood"));
       if (!response.ok) throw new Error("Failed to fetch");
@@ -205,7 +102,13 @@ export default function MentalHealthPage() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchMoodEntries();
+    }
+  }, [isAuthenticated, fetchMoodEntries]);
 
   const handleSaveMood = async (entry: MoodEntry) => {
     try {
@@ -271,22 +174,28 @@ export default function MentalHealthPage() {
 
     setIsLoadingInsights(true);
     const healthData = constructHealthData(moodEntries);
-    const errors: string[] = [];
 
-    const hResult = await runHealthInsights(healthData);
-    if (hResult.success) setInsights(hResult.data);
-    else errors.push(`Health: ${hResult.error}`);
+    try {
+      const response = await fetch(resolveApiUrl("/api/insights"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ healthData }),
+      });
 
-    const mResult = await runMoodRecommendations(healthData);
-    if (mResult.success) setRecommendations(mResult.data);
-    else errors.push(`Mood: ${mResult.error}`);
+      if (!response.ok) throw new Error("Failed to generate insights");
 
-    const sResult = await runSleepAnalysis(healthData);
-    if (sResult.success) setSleepInsights(sResult.data);
-    else errors.push(`Sleep: ${sResult.error}`);
+      const data = await response.json();
 
-    setIsLoadingInsights(false);
-    showGenerationToast(errors);
+      if (data.insights?.length > 0) setInsights(data.insights);
+      if (data.recommendations?.length > 0) setRecommendations(data.recommendations);
+      if (data.sleepInsights) setSleepInsights(data.sleepInsights);
+
+      showGenerationToast(data.errors || []);
+    } catch (err: any) {
+      showGenerationToast([err.message]);
+    } finally {
+      setIsLoadingInsights(false);
+    }
   };
 
   return (
@@ -400,11 +309,7 @@ export default function MentalHealthPage() {
           </TabsContent>
 
           <TabsContent value="support">
-            <SupportPanel
-              loading={loading}
-              location={location}
-              onGetLocation={getUserLocation}
-            />
+            <SupportPanel />
           </TabsContent>
         </AnimatePresence>
       </Tabs>

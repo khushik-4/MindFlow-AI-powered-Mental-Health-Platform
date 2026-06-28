@@ -2,108 +2,55 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Heart, Phone, MapPin, Globe, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface Location {
-  country: string;
-  city: string;
-  state?: string;
-}
-
-interface SupportPanelProps {
-  loading: boolean;
-  location: Location | null;
-  onGetLocation: () => Promise<void> | void;
-}
-
-function getEmergencyNumber(country: string): string {
-  const emergencyNumbers: Record<string, string> = {
-    "United States": "911",
-    "United Kingdom": "999",
-    Australia: "000",
-    India: "112",
-  };
-  return emergencyNumbers[country] || "112";
-}
-
-function getCrisisHotline(country: string): string {
-  const hotlines: Record<string, string> = {
-    "United States": "988",
-    "United Kingdom": "116 123",
-    Australia: "13 11 14",
-    India: "9152987821",
-  };
-  return hotlines[country] || "Contact your local mental health provider";
-}
-
-function LocalResourcesCard({
-  loading,
-  location,
-  onGetLocation,
-}: SupportPanelProps) {
-  const cardDesc = loading
-    ? "Detecting your location..."
-    : location
-    ? `Resources for ${location.city}, ${location.state || location.country}`
-    : "Location access required for local resources";
-
+function EmergencyResourcesCard() {
   return (
     <Card className="border-none shadow-md hover:shadow-lg transition-all duration-300 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 group">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MapPin className="w-5 h-5 text-primary" />
-          Local Emergency Resources
+          Emergency & Crisis Resources
         </CardTitle>
-        <CardDescription>{cardDesc}</CardDescription>
+        <CardDescription>Immediate, 24/7 mental health crisis support</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {location ? (
-          <>
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-semibold flex items-center gap-2 mb-2">
-                <Phone className="w-4 h-4" />
-                Emergency Number
-              </h3>
-              <p className="text-2xl font-bold text-primary">
-                {getEmergencyNumber(location.country)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                For immediate emergency assistance
-              </p>
-            </div>
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-semibold flex items-center gap-2 mb-2">
-                <Heart className="w-4 h-4" />
-                Crisis Hotline
-              </h3>
-              <p className="text-2xl font-bold text-primary">
-                {getCrisisHotline(location.country)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                24/7 Mental health crisis support
-              </p>
-            </div>
-          </>
-        ) : (
-          !loading && (
-            <Button onClick={onGetLocation} variant="outline" className="w-full">
-              <MapPin className="w-4 h-4 mr-2" />
-              Enable Location Access
-            </Button>
-          )
-        )}
+        <div className="p-4 bg-muted rounded-lg">
+          <h3 className="font-semibold flex items-center gap-2 mb-2">
+            <Phone className="w-4 h-4 text-primary" />
+            988 Suicide & Crisis Lifeline
+          </h3>
+          <p className="text-2xl font-bold text-primary">988</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Free, confidential, 24/7 support (US & Canada)
+          </p>
+        </div>
+        <div className="p-4 bg-muted rounded-lg">
+          <h3 className="font-semibold flex items-center gap-2 mb-2">
+            <Heart className="w-4 h-4 text-primary" />
+            Crisis Text Line
+          </h3>
+          <p className="text-2xl font-bold text-primary">Text HOME to 741741</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            24/7 free text-based support with a crisis counselor
+          </p>
+        </div>
+        <div className="p-4 bg-muted rounded-lg">
+          <h3 className="font-semibold flex items-center gap-2 mb-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            Local Care Search
+          </h3>
+          <p className="text-sm leading-relaxed">
+            Search "mental health support near me" on Google Maps to locate municipal health clinics, counseling services, and support groups in your vicinity.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-export function SupportPanel({
-  loading,
-  location,
-  onGetLocation,
-}: SupportPanelProps) {
+export function SupportPanel() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -117,11 +64,7 @@ export function SupportPanel({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <LocalResourcesCard
-            loading={loading}
-            location={location}
-            onGetLocation={onGetLocation}
-          />
+          <EmergencyResourcesCard />
         </motion.div>
 
         <motion.div
