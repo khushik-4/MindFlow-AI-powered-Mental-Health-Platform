@@ -59,6 +59,7 @@ import { ChatHistory } from "@/components/chat/chat-history";
 import {
   getTodaysActivities,
   updateActivityStatus,
+  getLatestHealthMetrics,
   getUserActivities,
   saveMoodData,
   logActivity,
@@ -86,6 +87,7 @@ import Modal from "@/components/Modal";
 import { ActivityLogger } from "@/components/activities/activity-logger";
 
 import { HealthMetrics } from "@/components/dashboard/health-metrics";
+import { FitbitConnect } from "@/components/wearables/fitbit-connect";
 
 import {
   ActivityLevel,
@@ -103,6 +105,7 @@ interface GameActivity {
   description: string;
 }
 
+// Create a SearchParamsComponent to isolate useSearchParams
 const SearchParamsComponent = ({
   onParamsChange,
 }: {
@@ -124,6 +127,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
 
+  // New states for crisis management and interventions
   const [riskLevel, setRiskLevel] = useState<"low" | "medium" | "high">("low");
   const [showCrisisAlert, setShowCrisisAlert] = useState(false);
   const [interventions, setInterventions] = useState([
@@ -141,11 +145,13 @@ export default function Dashboard() {
     },
   ]);
 
+  // Crisis resources
   const emergencyContacts = [
     { name: "Crisis Hotline", number: "1-800-273-8255" },
     { name: "Therapist", number: "Dr. Smith - (555) 123-4567" },
   ];
 
+  // Medication tracking
   const medications = [
     {
       name: "Sertraline",
@@ -161,6 +167,7 @@ export default function Dashboard() {
     },
   ];
 
+  // AI Insights
   const [aiInsights, setAiInsights] = useState<
     {
       title: string;
@@ -170,10 +177,11 @@ export default function Dashboard() {
     }[]
   >([]);
 
+  // New states for chat and IoT
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hi there, how are you feeling today?",
+      content: "Hi Sarah, how are you feeling today?",
       timestamp: new Date(Date.now() - 1000 * 60 * 5),
     },
     {
@@ -189,14 +197,29 @@ export default function Dashboard() {
     },
   ]);
 
+  // New states for activities and wearables
   const [activities, setActivities] = useState<DbActivity[]>([]);
+  // const [wearableConnected, setWearableConnected] = useState(false);
+  // const [healthMetrics, setHealthMetrics] = useState({...});
+
+  // Also add userId for the function call
+  // const userId = "current-user-id"; // Replace this with actual user ID from your auth system
+
+  // New states for mood tracking
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [showCheckInChat, setShowCheckInChat] = useState(false);
+
+  // In your Dashboard component, add this state
   const [activityHistory, setActivityHistory] = useState<DayActivity[]>([]);
+
+  // Add state for activity logger
   const [showActivityLogger, setShowActivityLogger] = useState(false);
+
+  // Add new state for loading
   const [isSavingActivity, setIsSavingActivity] = useState(false);
   const [isSavingMood, setIsSavingMood] = useState(false);
 
+  // Add this state for today's stats
   const [todayStats, setTodayStats] = useState({
     moodScore: null as number | null,
     completionRate: 0,
@@ -204,6 +227,9 @@ export default function Dashboard() {
     totalActivities: 0,
   });
 
+// transformActivitiesToDayActivity is imported from dashboard-utils
+
+  // Modify the loadActivities function to update activityHistory
   const loadActivities = useCallback(async () => {
     if (!user?.id) return;
     try {
@@ -221,7 +247,21 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-
+  useEffect(() => {
+    // Check if we have a hash in the URL (contains access token after auth)
+    if (window.location.hash) {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = params.get("access_token");
+      if (accessToken) {
+        // Store the token securely
+        localStorage.setItem("fitbit_token", accessToken);
+        // Clear the URL
+        router.replace("/dashboard");
+        // Update state to show connected
+        // setWearableConnected(true);
+      }
+    }
+  }, [router]);
 
   const moodHistory = [
     { day: "Mon", value: 65 },
@@ -248,12 +288,14 @@ export default function Dashboard() {
     },
   ];
 
+  // Add this effect to update stats when activities change
   useEffect(() => {
     if (activities.length > 0) {
       setTodayStats(calculateDailyStats(activities));
     }
   }, [activities]);
 
+  // Replace the existing wellnessStats array with this dynamic version
   const wellnessStats = [
     {
       title: "Mood Score",
@@ -289,12 +331,22 @@ export default function Dashboard() {
     },
   ];
 
+  // Add this effect to update insights when activities change
   useEffect(() => {
     if (activities.length > 0) {
       setAiInsights(generateAIInsights(activities));
     }
   }, [activities]);
 
+  // Fetch activities and health metrics
+  // useEffect(() => {
+  //   if (mounted) {
+  //     fetchTodaysActivities();
+  //     fetchHealthMetrics();
+  //   }
+  // }, [mounted]);
+
+  // Add these action handlers
   const handleStartTherapy = () => {
     router.push("/therapy/new");
   };
@@ -319,14 +371,50 @@ export default function Dashboard() {
     setShowActivityLogger(true);
   };
 
+  // Function to fetch Fitbit data
+  const fetchFitbitData = async () => {
+    const token = localStorage.getItem("fitbit_token");
+    if (!token) return;
 
+    try {
+      const response = await fetch(
+        "https://api.fitbit.com/1/user/-/profile.json",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
+      if (response.ok) {
+        const data = await response.json();
+        // Handle the data
+        console.log(data);
+      } else {
+        // Handle error or token expiration
+        // setWearableConnected(false);
+        localStorage.removeItem("fitbit_token");
+      }
+    } catch (error) {
+      console.error("Failed to fetch Fitbit data:", error);
+    }
+  };
+
+  // Use the fetchFitbitData function when needed
+  useEffect(() => {
+    if (mounted) {
+      fetchFitbitData();
+    }
+  }, [mounted]);
+
+  // Load activities on mount and after new ones are logged
   useEffect(() => {
     if (user?.id) {
       loadActivities();
     }
   }, [user?.id, loadActivities]);
 
+  // Add this handler for game activities
   const handleGamePlayed = useCallback(
     async (gameName: string, description: string) => {
       if (!user?.id) return;
@@ -338,11 +426,12 @@ export default function Dashboard() {
           name: gameName,
           description: description,
           completed: true,
-          duration: null,
+          duration: null, // Games typically don't have fixed durations
           moodScore: null,
           moodNote: null,
         });
 
+        // Refresh activities after logging
         loadActivities();
       } catch (error) {
         console.error("Error logging game activity:", error);
@@ -351,8 +440,13 @@ export default function Dashboard() {
     [user?.id, loadActivities]
   );
 
-  const handleSearchParams = useCallback((params: URLSearchParams) => { }, []);
+  // Add handler for search params
+  const handleSearchParams = useCallback((params: URLSearchParams) => {
+    // Handle search params here
+    // Your existing search params logic
+  }, []);
 
+  // Simple loading state
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -361,6 +455,15 @@ export default function Dashboard() {
     );
   }
 
+  // Remove or modify the debug console.log
+  // Instead of constant logging, we can log only when auth state changes
+  // useEffect(() => {
+  //   if (process.env.NODE_ENV === "development") {
+  //     console.log("Auth state changed:", { isAuthenticated, user, isLoading });
+  //   }
+  // }, [isAuthenticated, user, isLoading]);
+
+  // Redirect if not authenticated (only after session check completes)
   if (!isAuthenticated && !isCheckingSession) {
     return null;
   }
@@ -396,16 +499,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <hr className="border-border/40" />
-
         {/* Crisis Alert */}
         {showCrisisAlert && (
           <Alert variant="destructive" className="animate-pulse">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Crisis Support Available</AlertTitle>
             <AlertDescription>
-              We noticed you might be having a difficult time. Help is available
-              24/7.
+              We've noticed you might be having a difficult time. Help is
+              available 24/7.
               <div className="mt-2">
                 <Button variant="secondary" className="mr-2">
                   <PhoneCall className="mr-2 h-4 w-4" />
@@ -418,7 +519,7 @@ export default function Dashboard() {
         )}
 
         {/* Main Grid Layout */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Top Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Quick Actions Card */}
@@ -466,7 +567,27 @@ export default function Dashboard() {
                       </div>
                     </Button>
 
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex flex-col h-[120px] px-4 py-3 group/mood hover:border-primary/50",
+                          "justify-center items-center text-center",
+                          "transition-all duration-200 group-hover:translate-y-[-2px]"
+                        )}
+                        onClick={() => setShowMoodModal(true)}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center mb-2">
+                          <Heart className="w-5 h-5 text-rose-500" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Track Mood</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            How are you feeling?
+                          </div>
+                        </div>
+                      </Button>
+
                       <Button
                         variant="outline"
                         className={cn(
@@ -492,29 +613,30 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Today's Overview Card — compact */}
+            {/* Today's Overview Card */}
             <Card className="border-primary/10">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Today's Overview</CardTitle>
-                <CardDescription className="text-xs">
+              <CardHeader>
+                <CardTitle>Today's Overview</CardTitle>
+                <CardDescription>
                   Your wellness metrics for {format(new Date(), "MMMM d, yyyy")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {wellnessStats.map((stat) => (
+                <div className="grid grid-cols-2 gap-3">
+                  {wellnessStats.map((stat, index) => (
                     <div
                       key={stat.title}
                       className={cn(
-                        "p-2.5 rounded-lg transition-all duration-200 hover:scale-[1.02] bg-muted/30"
+                        "p-4 rounded-lg transition-all duration-200 hover:scale-[1.02]",
+                        stat.bgColor
                       )}
                     >
-                      <div className="flex items-center gap-1.5">
-                        <stat.icon className={cn("w-4 h-4", stat.color)} />
-                        <p className="text-xs font-medium">{stat.title}</p>
+                      <div className="flex items-center gap-2">
+                        <stat.icon className={cn("w-5 h-5", stat.color)} />
+                        <p className="text-sm font-medium">{stat.title}</p>
                       </div>
-                      <p className="text-base font-semibold mt-1">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-2xl font-bold mt-2">{stat.value}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {stat.description}
                       </p>
                     </div>
@@ -525,43 +647,46 @@ export default function Dashboard() {
 
             {/* AI Insights Card */}
             <Card className="border-primary/10">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <BrainCircuit className="w-5 h-5 text-primary" />
                   AI Insights
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription>
                   Personalized recommendations based on your activity patterns
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {aiInsights.length > 0 ? (
                     aiInsights.map((insight, index) => (
                       <div
                         key={index}
                         className={cn(
-                          "p-3 rounded-lg space-y-1 transition-all hover:scale-[1.02]",
+                          "p-4 rounded-lg space-y-2 transition-all hover:scale-[1.02]",
                           insight.priority === "high"
                             ? "bg-primary/10"
                             : insight.priority === "medium"
-                              ? "bg-primary/5"
-                              : "bg-muted"
+                            ? "bg-primary/5"
+                            : "bg-muted"
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <insight.icon className="w-4 h-4 text-primary" />
-                          <p className="font-medium text-sm">{insight.title}</p>
+                          <insight.icon className="w-5 h-5 text-primary" />
+                          <p className="font-medium">{insight.title}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {insight.description}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-muted-foreground py-3">
-                      <Activity className="w-6 h-6 mx-auto mb-1 opacity-40" />
-                      <p className="text-xs">Complete activities to unlock insights</p>
+                    <div className="text-center text-muted-foreground py-8">
+                      <Activity className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                      <p>
+                        Complete more activities to receive personalized
+                        insights
+                      </p>
                     </div>
                   )}
                 </div>
@@ -573,6 +698,9 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left side - Spans 2 columns */}
             <div className="lg:col-span-2 space-y-6">
+
+
+              {/* Anxiety Games - Now directly below Fitbit */}
               <AnxietyGames onGamePlayed={handleGamePlayed} />
             </div>
 
@@ -600,7 +728,10 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Contribution Graph */}
                   <ContributionGraph data={activityHistory} />
+
+                  {/* Recent Activities */}
                   <div className="space-y-4">
                     <h4 className="font-medium text-sm">Recent Activities</h4>
                     <div className="space-y-2">
@@ -651,8 +782,10 @@ export default function Dashboard() {
         </div>
       </Container>
 
+      {/* Fixed Chat */}
       <FixedChat />
 
+      {/* Mood tracking modal */}
       <Dialog open={showMoodModal} onOpenChange={setShowMoodModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -665,6 +798,7 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* AI check-in chat */}
       {showCheckInChat && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
           <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-background border-l shadow-lg">
@@ -679,7 +813,9 @@ export default function Dashboard() {
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4" />
+              <div className="flex-1 overflow-y-auto p-4">
+                {/* Add your AI chat interface here */}
+              </div>
             </div>
           </div>
         </div>
