@@ -27,16 +27,15 @@ MindFlow is a private, AI-assisted space designed for mental wellness check-ins,
 
 ## Tech Stack
 
--> Language: TypeScript
--> Frontend: Next.js 14, React 18, Tailwind CSS, Framer Motion, Radix UI (Shadcn), Lucide React (icons), Chart.js / React Chartjs 2 (graphs)
--> Backend: Next.js 14 Route Handlers
--> Database and ORM: PostgreSQL, Prisma ORM
--> AI / LLM: Groq SDK (Llama 3.1 8B Instant)
--> Authentication: JSON Web Tokens (JWT) via jsonwebtoken, bcryptjs for password hashing, and cookie-based session headers
--> State Management: React Context API (AuthContext)
--> Deployment Target: Vercel / Custom Node hosting
+## Tech Stack
 
-Note: unused dependencies present in package.json: @auth/core, @aws-sdk/*, @excalidraw/excalidraw, @google/generative-ai, @langchain/*, firebase, firebase-admin, next-auth, next-ws, react-hook-form, zod
+- **Language**: TypeScript
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, Framer Motion, shadcn/ui
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+- **AI**: Groq SDK (LLaMA 3.1 8B Instant)
+- **Authentication**: JWT with bcrypt password hashing
+- **Deployment**: Vercel
 
 ## How To Use It
 
@@ -59,7 +58,6 @@ Note: unused dependencies present in package.json: @auth/core, @aws-sdk/*, @exca
    - DATABASE_URL: PostgreSQL database connection string (obtain from https://neon.tech)
    - GROQ_API_KEY: API credential for LLM access (obtain from https://console.groq.com/keys)
    - JWT_SECRET: A random secure string used locally to sign authentication tokens (no external link needed)
-   - NEXT_PUBLIC_MAPBOX_API_KEY: API credential for geocoding services (obtain from https://docs.mapbox.com/help/getting-started/access-tokens/)
 
 -> Step 4: Generate the Prisma client:
    npx prisma generate
