@@ -19,7 +19,6 @@ import {
   MessageCircle,
   Clock,
   User,
-  Lock,
   ArrowRight,
   Loader2
 } from "lucide-react";
@@ -204,27 +203,6 @@ export default function CommunityPage() {
         <p className="text-muted-foreground mt-2">Connect with others who understand what you're going through</p>
       </motion.div>
 
-      {/* Chat Section Card */}
-      <Card className="mb-8 border-none shadow-md bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold">Live Community Chat</h2>
-              <p className="text-muted-foreground">Join real-time conversations with community members</p>
-            </div>
-            <Button 
-              size="lg" 
-              className="gap-2"
-              onClick={() => router.push('/community/chat')}
-            >
-              <MessageCircle className="w-5 h-5" />
-              Join Chat
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-6 md:grid-cols-4">
         {/* Forums Sidebar */}
         <Card className="md:col-span-1 border-none shadow-md bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -255,9 +233,6 @@ export default function CommunityPage() {
                 >
                   <span className="text-xl">{forum.icon}</span>
                   <span>{forum.name}</span>
-                  {forum.isPrivate && (
-                    <Lock className="w-4 h-4 ml-auto text-muted-foreground" />
-                  )}
                 </Button>
               ))}
             </div>
