@@ -4,35 +4,17 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   Brain,
-  Calendar,
-  LineChart,
-  MessageCircle,
   Activity,
-  Sun,
-  Moon,
-  Cloud,
-  Timer,
-  BookOpen,
   Heart,
   Trophy,
   Bell,
   AlertCircle,
   PhoneCall,
-  Pill,
-  Lightbulb,
   Sparkles,
   MessageSquare,
-  Settings,
-  Wand2,
-  Wifi,
-  Thermometer,
-  Music,
-  Lamp,
   BrainCircuit,
   ArrowRight,
   X,
-  XCircle,
-  Loader2,
 } from "lucide-react";
 import {
   Card,
@@ -42,29 +24,18 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FixedChat } from "@/components/chat/fixed-chat";
 import { MoodForm } from "@/components/mood/mood-form";
 import { AnxietyGames } from "@/components/games/anxiety-games";
-import { ExpandableChat } from "@/components/chat/expandable-chat";
-import { ActivityList } from "@/components/activities/activity-list";
-import { ChatHistory } from "@/components/chat/chat-history";
 import {
-  getTodaysActivities,
-  updateActivityStatus,
   getUserActivities,
   saveMoodData,
   logActivity,
 } from "@/lib/db/actions";
-import { StartSessionModal } from "@/components/therapy/start-session-modal";
-import { SessionHistory } from "@/components/therapy/session-history";
 import {
   Dialog,
   DialogContent,
@@ -73,22 +44,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Calendar as CalendarIcon } from "lucide-react";
 import {
-  addDays,
   format,
-  subDays,
-  startOfDay,
-  isWithinInterval,
 } from "date-fns";
 import { useAuth } from "@/lib/contexts/auth-context";
-import Modal from "@/components/Modal";
 import { ActivityLogger } from "@/components/activities/activity-logger";
 
-import { HealthMetrics } from "@/components/dashboard/health-metrics";
+
 
 import {
-  ActivityLevel,
   DayActivity,
   Activity as DbActivity,
   ContributionGraph,
